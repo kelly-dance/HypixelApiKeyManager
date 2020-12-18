@@ -19,7 +19,45 @@ export const getKey = () => {
   if(valid) return key;
 }
 
+let listeners = [];
+
+/**
+ * @param {(key: string) => void} cb
+ * @param {boolean=} single
+ */
+export const onKeyChange = (cb, single=true) => listeners.push([cb, single]);
+
+/**
+ * Prompts the user to set their API key and resolves it.
+ * If the users denies or times out in 30s it rejects.
+ * Gives a message like `${module} requires your API key to work! ...`
+ * @param {string} mod 
+ * @returns {Promise<String>}
+ */
+export const promptKey = mod => {
+  if(valid) return Promise.resolve(key);
+  ChatLib.chat(`&b${mod} &arequires your API key to operate!`);
+  ChatLib.chat(`&aGenerate a new API key with &b/api new &aor set it with &b/api set <key>&a.`);
+  return new Promise((resolve, reject) => {
+    let resolved = false;
+    onKeyChange(newkey => {
+      if(!resolved) resolve(newkey);
+    })
+    setTimeout(() => reject(), 30e3)
+  });
+}
+
+export const hasKey = () => valid;
+
 const saveKey = () => FileLib.write(keyPath, key);
+
+const setKey = newkey => {
+  key = newkey;
+  valid = true;
+  listeners.forEach(([cb]) => cb(key));
+  listeners = listeners.filter(([_, single]) => !single);
+  saveKey();
+}
 
 /**
  * Get the info for a key
@@ -33,7 +71,7 @@ const saveKey = () => FileLib.write(keyPath, key);
  *  totalQueries: number
  * }>}
  */
-const getKeyInfo = key => {
+export const getKeyInfo = key => {
   return request({
     url: `https://api.hypixel.net/key?key=${key}`,
     json: true,
@@ -56,13 +94,21 @@ export const validify = key => getKeyInfo(key).then(() => true).catch(() => fals
  */
 const numberWithCommas = x => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-register('chat', newkey => {
-  key = newkey;
-  valid = true;
-  saveKey();
-}).setCriteria('&aYour new API key is &r&b${key}&r');
+register('chat', setKey).setCriteria('&aYour new API key is &r&b${key}&r');
 
 const makeApiKeyComponent = key => new TextComponent(`&b${key}`).setHover('show_text', '&eClick to put the key in chat so you can copy!').setClick('suggest_command', key);
+
+const sayInvalidWarn = () => {
+  ChatLib.chat('&cYour current API key is invalid!');
+  sayMakeKey();
+}
+
+const sayNoKeyWarn = () => {
+  ChatLib.chat('&cYou do not have an API key set!');
+  sayMakeKey();
+}
+
+const sayMakeKey = () => ChatLib.chat('&cSet one with /api set <key> or generate a new one with /api new.');
 
 const subcommands = {
   new: () => {
@@ -71,33 +117,45 @@ const subcommands = {
   get: () => {
     if(valid) ChatLib.chat(new Message('&aYour API key is ', makeApiKeyComponent(key)));
     else {
-      ChatLib.chat('&cYour current API key is invalid!');
-      ChatLib.chat('&cSet one with /api set <key> or generate a new one with /api new.');
+      if(!key) sayNoKeyWarn();
+      else sayInvalidWarn();
     }
   },
   set: newkey => {
     if(!newkey) return ChatLib.chat('&cPlease enter your key with /api set <key>.')
     validify(newkey).then(isValid => {
       if(isValid){
-        key = newkey;
-        valid = true;
-        saveKey();
-        ChatLib.chat(new Message('&aSaved your API key as ', makeApiKeyComponent(key)));
+        setKey(newkey)
+        ChatLib.chat(new Message('&aSaved your API key as ', makeApiKeyComponent(newkey)));
       }else{
         ChatLib.chat(`&cIt appears your API key was invalid!`);
       }
     });
   },
   stats: otr => {
-    const checking = otr || key;
+    let checking = key;
+    let self = true;
+    if(otr){
+      checking = otr;
+      self = false;
+    }
+    if(!checking){
+      sayNoKeyWarn();
+      return;
+    }
     getKeyInfo(checking).then(data => {
       ChatLib.chat(new Message('&aKey: ', makeApiKeyComponent(checking)));
-      ChatLib.chat(`&aOwner: &b${data.owner}`);
+      ChatLib.chat(new Message('&aOwner: ', new TextComponent(`&b${data.owner}`).setHover('show_text', '&eClick to put the uuid in chat so you can copy!').setClick('suggest_command', data.owner)));
       ChatLib.chat(`&aLimit: &b${data.limit}`);
       ChatLib.chat(`&aQueries in the last minute: &b${numberWithCommas(data.queriesInPastMin)}`);
       ChatLib.chat(`&aTotal Queries: &b${numberWithCommas(data.totalQueries)}`);
     }).catch(() => {
-      ChatLib.chat(`&cLooks like that key is invalid!`)
+      if(self) {
+        ChatLib.chat(`&cUh oh! Looks like your API key was invalid!`)
+        valid = false;
+      } else {
+        ChatLib.chat(`&cLooks like that key is invalid!`);
+      }
     })
   }
 }
