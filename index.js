@@ -9,7 +9,7 @@ const keyPath = `${Config.modulesFolder}/HypixelApiKeyManager/key.txt`;
 
 let key = FileLib.read(keyPath);
 
-let valid = !!key;
+let valid = false;
 
 /**
  * Returns undefined if no is found or it is invalid
@@ -71,9 +71,10 @@ const setKey = newkey => {
  *  totalQueries: number
  * }>}
  */
-export const getKeyInfo = key => {
+export const getKeyInfo = (checking = key) => {
+  if(!checking) Promise.reject('No key provided');
   return request({
-    url: `https://api.hypixel.net/key?key=${key}`,
+    url: `https://api.hypixel.net/key?key=${checking}`,
     json: true,
   }).then(({success, record, cause}) => {
     if(!success) return Promise.reject(cause);
@@ -87,6 +88,11 @@ export const getKeyInfo = key => {
  * @returns {Promise<boolean>}
  */
 export const validify = key => getKeyInfo(key).then(() => true).catch(() => false);
+
+if(key) validify(key).then(b => {
+  valid = b;
+  if(!b) sayInvalidWarn();
+});
 
 /**
  * @param {number} x 
