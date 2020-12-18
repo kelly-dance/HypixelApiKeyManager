@@ -1,0 +1,4 @@
+{
+  "entry": "index.js",
+  "requires": ["requestV2", "CustomTabCompletions", "PromiseV2"]
+}
