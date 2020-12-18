@@ -25,7 +25,7 @@ let listeners = [];
  * @param {(key: string) => void} cb
  * @param {boolean=} single
  */
-export const onKeyChange = (cb, single=true) => listeners.push([cb, single]);
+export const onKeyChange = (cb, single=false) => listeners.push([cb, single]);
 
 /**
  * Prompts the user to set their API key and resolves it.
@@ -42,7 +42,7 @@ export const promptKey = mod => {
     let resolved = false;
     onKeyChange(newkey => {
       if(!resolved) resolve(newkey);
-    })
+    }, true);
     setTimeout(() => reject(), 30e3)
   });
 }
