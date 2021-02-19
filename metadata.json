@@ -1,4 +1,6 @@
 {
-  "entry": "index.js",
+  "$schema": "../CTAutocomplete/schema.json",
+  "name": "HypixelApiKeyManager",
+  "entry": "./index.js",
   "requires": ["requestV2", "CustomTabCompletions", "PromiseV2"]
 }
