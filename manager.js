@@ -196,7 +196,7 @@ const commandTrigger = register('command', (...args) => {
     ChatLib.chat(`&b/api get &a- Display your current API key`);
     ChatLib.chat(`&b/api set <key> &a- Set your current API key`);
     ChatLib.chat(`&b/api stats &a- View stats about your API key`);
-    ChatLib.chat(`&b/api hide &a- Toggle your API key from being visable in command outputs`);
+    ChatLib.chat(`&b/api hide &a- Toggle your API key from being visible in command outputs`);
   }
   else if(!(subcommand in subcommands)) ChatLib.chat(`&cInvalid Command! &aThe available commands are: &b${Object.keys(subcommands).join('&a, &b')}&a.`);
   else subcommands[subcommand](...args.slice(1));
