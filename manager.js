@@ -186,19 +186,20 @@ const subcommands = {
     else ChatLib.chat('&cYour key is no longer hidden from commands.');
     saveStuff();
   },
-}
-
-const commandTrigger = register('command', (...args) => {
-  const subcommand = args[0]?.toLowerCase();
-  if(!subcommand) {
+  help: () => {
     ChatLib.chat(`&a&l--- API KEY MANAGER ---`);
     ChatLib.chat(`&b/api new &a- Generate a new API key`);
     ChatLib.chat(`&b/api get &a- Display your current API key`);
     ChatLib.chat(`&b/api set <key> &a- Set your current API key`);
     ChatLib.chat(`&b/api stats &a- View stats about your API key`);
     ChatLib.chat(`&b/api hide &a- Toggle your API key from being visible in command outputs`);
+    ChatLib.chat(`&b/api help &a- This message`);
   }
-  else if(!(subcommand in subcommands)) ChatLib.chat(`&cInvalid Command! &aThe available commands are: &b${Object.keys(subcommands).join('&a, &b')}&a.`);
+}
+
+const commandTrigger = register('command', (...args) => {
+  const subcommand = args[0]?.toLowerCase() || 'help';
+  if(!(subcommand in subcommands)) ChatLib.chat(`&cInvalid Command! &aThe available commands are: &b${Object.keys(subcommands).join('&a, &b')}&a.`);
   else subcommands[subcommand](...args.slice(1));
 }).setName('api');
 addCustomCompletion(commandTrigger, args => {
