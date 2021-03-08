@@ -8,7 +8,10 @@ import { Promise } from '../PromiseV2';
 const modDirPath = `${Config.modulesFolder}/HypixelApiKeyManager`;
 const modJsonPath = `${modDirPath}/localdata.json`;
 
-let {key, hidden} = JSON.parse(FileLib.read(modJsonPath) || '{"key":"","hidden":false}');
+let settings = JSON.parse(FileLib.read(modJsonPath) || '{}');
+let key = settings.key || '';
+let hidden = settings.hidden || false;
+let safe = settings.safe || true;
 
 // For upgrading from legacy version
 if(!key) key = FileLib.read(`${modDirPath}/key.txt`);
@@ -50,7 +53,7 @@ export const promptKey = mod => new Promise((resolve, reject) => {
 
 export const hasKey = () => valid;
 
-const saveStuff = () => FileLib.write(modJsonPath, JSON.stringify({key,hidden}));
+const saveStuff = () => FileLib.write(modJsonPath, JSON.stringify({ key, hidden, safe }));
 
 const setKey = newkey => {
   key = newkey;
@@ -109,8 +112,10 @@ const numberWithCommas = x => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 
 register('chat', (key, event) => {
   setKey(key);
-  cancel(event);
-  ChatLib.chat(new Message('&aYour new API key is ', makeApiKeyComponent(key)));
+  if(!safe){
+    cancel(event);
+    ChatLib.chat(new Message('&aYour new API key is ', makeApiKeyComponent(key)));
+  }
 }).setCriteria('&aYour new API key is &r&b${key}&r');
 
 const makeApiKeyComponent = key => {
@@ -193,8 +198,15 @@ const subcommands = {
     ChatLib.chat(`&b/api set <key> &a- Set your current API key`);
     ChatLib.chat(`&b/api stats &a- View stats about your API key`);
     ChatLib.chat(`&b/api hide &a- Toggle your API key from being visible in command outputs`);
+    ChatLib.chat(`&b/api safe &a- Toggles how the module gets your API key from &b/api new &ato avoid compatibility issues`);
     ChatLib.chat(`&b/api help &a- This message`);
-  }
+  },
+  safe: () => {
+    safe = !safe;
+    if(safe) ChatLib.chat('&aNow in safe mode.');
+    else ChatLib.chat('&cNo longer is safe mode.');
+    saveStuff();
+  },
 }
 
 const commandTrigger = register('command', (...args) => {
