@@ -216,8 +216,5 @@ const commandTrigger = register('command', (...args) => {
 }).setName('api');
 addCustomCompletion(commandTrigger, args => {
   const first = args[0]?.toLowerCase() || '';
-  console.log(args.toString())
-  console.log(first)
-  console.log(Object.keys(subcommands).filter(c => c.startsWith(first)).toString())
   return Object.keys(subcommands).filter(c => c.startsWith(first))
 })
