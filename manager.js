@@ -8,7 +8,7 @@ import { Promise } from '../PromiseV2';
 const modDirPath = `${Config.modulesFolder}/HypixelApiKeyManager`;
 const modJsonPath = `${modDirPath}/localdata.json`;
 
-let settings = JSON.parse(FileLib.read(modJsonPath) || '{}');
+const settings = JSON.parse(FileLib.read(modJsonPath) || '{}');
 let key = settings.key || '';
 let hidden = settings.hidden || false;
 let safe = settings.safe || true;
@@ -94,7 +94,7 @@ export const getKeyInfo = (checking = key) => {
 export const validify = key => getKeyInfo(key).then(() => true).catch(() => false);
 
 /** @type {Promise<string>} */
-let currentlyChecking = Promise.resolve(undefined);
+let currentlyChecking = Promise.reject();
 if(key) currentlyChecking = validify(key).then(b => {
   valid = b;
   if(b) return key;
